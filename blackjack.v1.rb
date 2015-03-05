@@ -2,29 +2,30 @@ suits = ["Hearts", "Diamonds", "Spades", "Clubs"]
 suit_values = ['2', '3', '4', '5', '6', '7','8', '9', '10', 'Jack', 'Queen','King', 'Ace']
 
 def calculate_total(hand)
+  arr = hand.map{|card| card[1] }
+
   card_total = 0
-  hand.each do |num|
-  if (num[1].to_i == 0) && (num[1] != 'Ace')
-    card_total += 10
-  elsif num[1].to_i > 0
-    card_total += num[1].to_i
-  else 
-    if card_total > 10
-      card_total += 1
-    else
+  arr.each do |card|
+    if card == 'Ace'
       card_total += 11
+    elsif card.to_i == 0
+      card_total += 10
+    else
+      card_total += card.to_i
     end
   end
-end
+  arr.select{|aces| aces == 'Ace'}.count.times do
+    card_total -= 10 if card_total > 21
+  end
   card_total
 end   
 
 def player_pick
-    begin
-      puts "Would you like to stay(s) or hit(h)?"
-      dealer_question = gets.chomp.downcase
-    end until dealer_question == 's' || dealer_question == 'h'
-  dealer_question
+  begin
+    puts "Would you like to stay(s) or hit(h)?"
+    player_response = gets.chomp.downcase
+  end until player_response == 's' || player_response == 'h'
+  player_response
 end
 
 def player_hit (player_hand, shuffled_deck)
@@ -46,15 +47,16 @@ def stay(hand)
 end
 
 def check_for_bust(player_hand)
-  if calculate_total(player_hand) > 21
-    return true
-  end
+  calculate_total(player_hand) > 21
 end
 
 def computer_play(computer_hand, shuffled)
-  if calculate_total(computer_hand) <= 17
-    computer_hit(computer_hand, shuffled)
-  end until check_for_bust(computer_hand) || calculate_total(computer_hand) >= 17
+  loop do
+    if calculate_total(computer_hand) < 17
+      computer_hit(computer_hand, shuffled)
+    end
+    break if check_for_bust(computer_hand) || calculate_total(computer_hand) >= 17
+  end
   if check_for_bust(computer_hand)
     puts "\nComputers card total is #{calculate_total(computer_hand)}." 
     puts "Computer Busts!"
@@ -64,12 +66,10 @@ def computer_play(computer_hand, shuffled)
 end
 
 def check_for_blackjack(hand)
-  if calculate_total(hand) == 21
-    true
-  end
+  calculate_total(hand) == 21
 end
 
-def check_for_winner(computer_hand, player_hand)
+def display_winner(computer_hand, player_hand)
   if check_for_bust(player_hand)
     puts "\nComputer wins!"
   elsif check_for_bust(computer_hand)
@@ -92,6 +92,7 @@ begin
 
   puts "\nYou were dealt the #{player_hand[0][1]} of #{player_hand[0][0]} and #{player_hand[1][1]} of #{player_hand[1][0]}."
   puts "\nYour card total is #{calculate_total(player_hand)}."
+  puts "\nThe Computers first card is the #{computer_hand[0][1]} of #{computer_hand[0][0]}."
   if check_for_blackjack(player_hand)
     puts "Player got blackjack! Player wins!"
     next
@@ -119,7 +120,7 @@ begin
       computer_play(computer_hand, shuffled_deck)
     end
   end
-  check_for_winner(computer_hand, player_hand)
+  display_winner(computer_hand, player_hand)
   puts "\nPlay again? (y/n)"
   play_again = gets.chomp.downcase
 end until play_again == 'n'
